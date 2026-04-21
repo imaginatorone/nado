@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="frontend/public/logo.png" width="120" alt="Nado">
+  <img src="frontend/public/media1.png" width="120" alt="Nado">
 </p>
 
-<h1 align="center">Nado</h1>
+<!-- <h1 align="center">Nado</h1> -->
 <p align="center"><b>Только то, что надо - и ничего лишнего.</b></p>
 <p align="center">Электронная доска объявлений</p>
 
@@ -236,22 +236,22 @@ npm run dev
 
 ## Переменные окружения
 
-| Переменная           | Описание                   | Значение по умолчанию                         |
-| -------------------- | -------------------------- | --------------------------------------------- |
-| `AUTH_MODE`          | Режим аутентификации       | `legacy`                                      |
-| `POSTGRES_DB`        | Имя базы данных            | `nado`                                        |
-| `POSTGRES_USER`      | Пользователь БД            | `nado_user`                                   |
-| `POSTGRES_PASSWORD`  | Пароль БД                  | —                                             |
-| `JWT_SECRET`         | Ключ для self-issued JWT   | —                                             |
-| `KEYCLOAK_ISSUER`    | URL Keycloak realm         | `http://localhost:8180/realms/nado`           |
-| `GOOGLE_CLIENT_ID`   | OAuth Client ID (Google)   | — (требует Google Console)                    |
-| `GOOGLE_CLIENT_SECRET`| OAuth Secret (Google)     | — (требует Google Console)                    |
-| `UPLOAD_DIR`         | Директория загрузки файлов | `./uploads`                                   |
-| `CORS_ORIGINS`       | Разрешённые origins        | `http://localhost:3000,http://localhost:5173` |
-| `ADMIN_SEED_ENABLED` | Создать admin при старте   | `false`                                       |
-| `MAIL_ENABLED`       | Включить email-канал       | `false`                                       |
-| `MAIL_FROM`          | Адрес отправителя email    | `noreply@nado.ru`                             |
-| `SMTP_HOST`          | SMTP-сервер                | `smtp.gmail.com`                              |
+| Переменная             | Описание                   | Значение по умолчанию                         |
+| ---------------------- | -------------------------- | --------------------------------------------- |
+| `AUTH_MODE`            | Режим аутентификации       | `legacy`                                      |
+| `POSTGRES_DB`          | Имя базы данных            | `nado`                                        |
+| `POSTGRES_USER`        | Пользователь БД            | `nado_user`                                   |
+| `POSTGRES_PASSWORD`    | Пароль БД                  | —                                             |
+| `JWT_SECRET`           | Ключ для self-issued JWT   | —                                             |
+| `KEYCLOAK_ISSUER`      | URL Keycloak realm         | `http://localhost:8180/realms/nado`           |
+| `GOOGLE_CLIENT_ID`     | OAuth Client ID (Google)   | — (требует Google Console)                    |
+| `GOOGLE_CLIENT_SECRET` | OAuth Secret (Google)      | — (требует Google Console)                    |
+| `UPLOAD_DIR`           | Директория загрузки файлов | `./uploads`                                   |
+| `CORS_ORIGINS`         | Разрешённые origins        | `http://localhost:3000,http://localhost:5173` |
+| `ADMIN_SEED_ENABLED`   | Создать admin при старте   | `false`                                       |
+| `MAIL_ENABLED`         | Включить email-канал       | `false`                                       |
+| `MAIL_FROM`            | Адрес отправителя email    | `noreply@nado.ru`                             |
+| `SMTP_HOST`            | SMTP-сервер                | `smtp.gmail.com`                              |
 
 Полный список - в `.env.example`.
 
