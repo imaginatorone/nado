@@ -14,6 +14,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     List<Notification> findByUserIdAndIsReadFalse(Long userId);
 
-    // dedup: проверить существование уведомления с таким же type+payload за последний час
-    boolean existsByUserIdAndTypeAndPayload(Long userId, Notification.NotificationType type, String payload);
+    // dedup: проверить существование уведомления по каноническому хешу
+    boolean existsByUserIdAndTypeAndDedupKey(Long userId, Notification.NotificationType type, String dedupKey);
 }

@@ -1,5 +1,7 @@
 package com.solarl.nado.controller;
 
+import com.solarl.nado.dto.request.ModerationBlockRequest;
+import com.solarl.nado.dto.request.ModerationRejectRequest;
 import com.solarl.nado.dto.response.ModerationAdResponse;
 import com.solarl.nado.dto.response.PageResponse;
 import com.solarl.nado.service.ModerationService;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Map;
 
 @RestController
@@ -35,18 +38,16 @@ public class ModerationController {
     @PostMapping("/{adId}/reject")
     public ResponseEntity<ModerationAdResponse> reject(
             @PathVariable Long adId,
-            @RequestBody Map<String, String> body) {
-        String reason = body.getOrDefault("reason", "");
-        return ResponseEntity.ok(moderationService.reject(adId, reason));
+            @Valid @RequestBody ModerationRejectRequest request) {
+        return ResponseEntity.ok(moderationService.reject(adId, request.getReason()));
     }
 
     @Operation(summary = "Заблокировать объявление")
     @PostMapping("/{adId}/block")
     public ResponseEntity<ModerationAdResponse> block(
             @PathVariable Long adId,
-            @RequestBody Map<String, String> body) {
-        String reason = body.getOrDefault("reason", "");
-        return ResponseEntity.ok(moderationService.block(adId, reason));
+            @Valid @RequestBody ModerationBlockRequest request) {
+        return ResponseEntity.ok(moderationService.block(adId, request.getReason()));
     }
 
     @Operation(summary = "Количество ожидающих модерации")

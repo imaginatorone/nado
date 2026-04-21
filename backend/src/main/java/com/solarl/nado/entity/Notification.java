@@ -29,6 +29,13 @@ public class Notification {
     @Builder.Default
     private String payload = "{}";
 
+    /**
+     * SHA-256 хеш канонического payload для надёжной дедупликации.
+     * Не зависит от порядка ключей в JSON.
+     */
+    @Column(name = "dedup_key", length = 64)
+    private String dedupKey;
+
     @Column(name = "is_read", nullable = false)
     @Builder.Default
     private Boolean isRead = false;

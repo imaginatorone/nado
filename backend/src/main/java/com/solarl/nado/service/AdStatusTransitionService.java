@@ -138,6 +138,10 @@ public class AdStatusTransitionService {
         Ad ad = findAd(adId);
         User moderator = requireModerator();
 
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("причина блокировки обязательна");
+        }
+
         Ad result = transition(ad, Ad.Status.BLOCKED, moderator, reason);
         return result;
     }
@@ -153,8 +157,18 @@ public class AdStatusTransitionService {
                     String.format("переход %s → %s недопустим", from, to));
         }
 
+        // проверка прав: владелец vs модератор
+        boolean isOwner = ad.getUser().getId().equals(actor.getId());
+        boolean isMod = actor.getRole() == User.Role.MODERATOR || actor.getRole() == User.Role.ADMIN;
+
+        boolean allowedByOwnerRole = OWNER_TRANSITIONS.contains(to) && isOwner;
+        boolean allowedByModRole = MODERATOR_TRANSITIONS.contains(to) && isMod;
+
+        if (!allowedByOwnerRole && !allowedByModRole) {
+            throw new IllegalArgumentException("нет прав на выполнение действия");
+        }
+
         ad.setStatus(to);
-        ad.setModeratedAt(LocalDateTime.now());
 
         if (to == Ad.Status.PENDING_MODERATION) {
             ad.setSubmittedAt(LocalDateTime.now());
@@ -164,17 +178,22 @@ public class AdStatusTransitionService {
         if (to == Ad.Status.REJECTED) {
             ad.setRejectionReason(reason);
             ad.setModeratedBy(actor);
+            ad.setModeratedAt(LocalDateTime.now());
         }
 
         if (to == Ad.Status.PUBLISHED) {
             ad.setModeratedBy(actor);
+            ad.setModeratedAt(LocalDateTime.now());
             ad.setRejectionReason(null);
         }
 
         if (to == Ad.Status.BLOCKED) {
             ad.setRejectionReason(reason);
             ad.setModeratedBy(actor);
+            ad.setModeratedAt(LocalDateTime.now());
         }
+
+        // владелец-действия (SOLD, ARCHIVED, REMOVED) не трогают moderatedAt/moderatedBy
 
         ad = adRepository.save(ad);
 

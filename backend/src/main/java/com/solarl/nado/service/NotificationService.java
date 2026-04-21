@@ -13,8 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -32,13 +36,14 @@ public class NotificationService {
 
     /**
      * единственная точка входа для всех уведомлений.
-     * dedup: не создаёт дубль если уже есть идентичное (type + payload).
+     * dedup: не создаёт дубль если уже есть идентичное (type + dedupKey).
      */
     @Transactional
     public void send(User recipient, NotificationType type, Map<String, Object> payloadMap) {
         String payload = serializePayload(payloadMap);
+        String dedupKey = computeDedupKey(payloadMap);
 
-        if (repository.existsByUserIdAndTypeAndPayload(recipient.getId(), type, payload)) {
+        if (repository.existsByUserIdAndTypeAndDedupKey(recipient.getId(), type, dedupKey)) {
             log.debug("NOTIFICATION_DEDUP: userId={}, type={}", recipient.getId(), type);
             return;
         }
@@ -47,6 +52,7 @@ public class NotificationService {
                 .user(recipient)
                 .type(type)
                 .payload(payload)
+                .dedupKey(dedupKey)
                 .build();
         repository.save(notification);
 
@@ -161,6 +167,27 @@ public class NotificationService {
         } catch (JsonProcessingException e) {
             log.warn("не удалось сериализовать payload: {}", e.getMessage());
             return "{}";
+        }
+    }
+
+    /**
+     * Каноническая дедупликация: сортируем ключи → SHA-256.
+     * Порядок полей в JSON больше не влияет на dedup.
+     */
+    private String computeDedupKey(Map<String, Object> payloadMap) {
+        try {
+            // TreeMap гарантирует каноничный порядок ключей
+            String canonical = objectMapper.writeValueAsString(new TreeMap<>(payloadMap));
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(canonical.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (JsonProcessingException | NoSuchAlgorithmException e) {
+            log.warn("не удалось вычислить dedupKey: {}", e.getMessage());
+            return "";
         }
     }
 

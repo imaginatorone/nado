@@ -41,17 +41,6 @@ function ModeratorRoute({ children }) {
 
 function App() {
   const { isAuthenticated } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const loadUnread = () => {
-      chatAPI.getUnreadCount().then(r => setUnreadCount(r.data?.count || 0)).catch(() => {});
-    };
-    loadUnread();
-    const interval = setInterval(loadUnread, 10000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
 
   return (
     <div className="app">
@@ -81,7 +70,7 @@ function App() {
         </div>
       </main>
       <Footer />
-      <BottomNav unreadCount={unreadCount} />
+      <BottomNav />
     </div>
   );
 }

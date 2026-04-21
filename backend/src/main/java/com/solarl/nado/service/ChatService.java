@@ -120,6 +120,13 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse sendMessage(Long roomId, Long senderId, String content, MultipartFile file) {
+        // валидация: требуется или текст, или вложение
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasFile = file != null && !file.isEmpty();
+        if (!hasContent && !hasFile) {
+            throw new IllegalArgumentException("сообщение должно содержать текст или вложение");
+        }
+
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Чат не найден"));
 

@@ -37,7 +37,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("send() создаёт in-app уведомление")
     void send_createsNotification() {
-        when(repository.existsByUserIdAndTypeAndPayload(eq(1L), any(), anyString())).thenReturn(false);
+        when(repository.existsByUserIdAndTypeAndDedupKey(eq(1L), any(), anyString())).thenReturn(false);
 
         service.send(user, NotificationType.AD_APPROVED, Map.of("adId", 10L, "adTitle", "Тест"));
 
@@ -51,7 +51,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("dedup: повторное уведомление не создаётся")
     void send_dedup() {
-        when(repository.existsByUserIdAndTypeAndPayload(eq(1L), any(), anyString())).thenReturn(true);
+        when(repository.existsByUserIdAndTypeAndDedupKey(eq(1L), any(), anyString())).thenReturn(true);
 
         service.send(user, NotificationType.AD_APPROVED, Map.of("adId", 10L, "adTitle", "Тест"));
 
@@ -61,7 +61,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("notifyAdRejected: convenience-метод работает")
     void notifyAdRejected() {
-        when(repository.existsByUserIdAndTypeAndPayload(eq(1L), any(), anyString())).thenReturn(false);
+        when(repository.existsByUserIdAndTypeAndDedupKey(eq(1L), any(), anyString())).thenReturn(false);
 
         service.notifyAdRejected(user, 5L, "Плохое фото", "нарушение правил");
 
@@ -74,7 +74,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("notifyAuctionOutbid: уведомление перебитого")
     void notifyAuctionOutbid() {
-        when(repository.existsByUserIdAndTypeAndPayload(eq(1L), any(), anyString())).thenReturn(false);
+        when(repository.existsByUserIdAndTypeAndDedupKey(eq(1L), any(), anyString())).thenReturn(false);
 
         service.notifyAuctionOutbid(user, 3L, 10L, "iPhone 15");
 
@@ -87,7 +87,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("notifyWantedMatch: уведомление о совпадении")
     void notifyWantedMatch() {
-        when(repository.existsByUserIdAndTypeAndPayload(eq(1L), any(), anyString())).thenReturn(false);
+        when(repository.existsByUserIdAndTypeAndDedupKey(eq(1L), any(), anyString())).thenReturn(false);
 
         service.notifyWantedMatch(user, 1L, 20L, "Велосипед Trek");
 

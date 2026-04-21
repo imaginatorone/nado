@@ -14,6 +14,7 @@ import com.solarl.nado.repository.UserRepository;
 import com.solarl.nado.security.AuthFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +38,7 @@ public class UserService {
     private final StorageProperties storageProperties;
     private final FileValidationService fileValidationService;
     private final AuthFacade authFacade;
+    private final @Lazy PhoneVerificationService phoneVerificationService;
 
 
     @Transactional(readOnly = true)
@@ -62,7 +64,8 @@ public class UserService {
             user.setName(request.getName());
         }
         if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
+            // делегируем через PhoneVerificationService для сброса верификации
+            phoneVerificationService.onPhoneChanged(user, request.getPhone());
         }
         if (request.getRegion() != null) {
             user.setRegion(request.getRegion());
@@ -126,6 +129,7 @@ public class UserService {
             throw new IllegalArgumentException("Нельзя заблокировать администратора");
         }
         user.setActive(false);
+        user.setBanned(true);
         userRepository.save(user);
     }
 

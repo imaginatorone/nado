@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { notificationsAPI } from '../api/api';
 
-export default function BottomNav({ unreadCount = 0 }) {
+export default function BottomNav() {
   const { pathname } = useLocation();
   const { isAuthenticated, user } = useAuth();
   const [notifCount, setNotifCount] = useState(0);
