@@ -1,0 +1,8 @@
+spring:
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.solarl.nado: DEBUG
+    org.springframework.security: DEBUG

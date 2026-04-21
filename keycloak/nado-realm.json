@@ -1,0 +1,154 @@
+{
+  "realm": "nado",
+  "enabled": true,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      {
+        "name": "USER",
+        "description": "Обычный пользователь",
+        "composite": false
+      },
+      {
+        "name": "MODERATOR",
+        "description": "Модератор объявлений",
+        "composite": false
+      },
+      {
+        "name": "ADMIN",
+        "description": "Администратор платформы",
+        "composite": true,
+        "composites": {
+          "realm": ["USER", "MODERATOR"]
+        }
+      }
+    ]
+  },
+  "defaultRoles": ["USER"],
+  "clients": [
+    {
+      "clientId": "nado-frontend",
+      "name": "Nado Frontend SPA",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
+      "protocol": "openid-connect",
+      "defaultClientScopes": ["openid", "profile", "email", "roles"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:5173/*"
+      }
+    },
+    {
+      "clientId": "nado-backend",
+      "name": "Nado Backend Service",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@nado.ru",
+      "email": "admin@nado.ru",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Администратор",
+      "lastName": "Nado",
+      "realmRoles": ["ADMIN", "MODERATOR", "USER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "moderator@nado.ru",
+      "email": "moderator@nado.ru",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Модератор",
+      "lastName": "Nado",
+      "realmRoles": ["MODERATOR", "USER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mod123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "user@nado.ru",
+      "email": "user@nado.ru",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Пользователь",
+      "lastName": "Тестовый",
+      "realmRoles": ["USER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user123",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "identityProviders": [],
+  "identityProviderMappers": [],
+  "smtpServer": {}
+}

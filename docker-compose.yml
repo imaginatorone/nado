@@ -1,0 +1,87 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nado-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nado}
+      POSTGRES_USER: ${POSTGRES_USER:-nado_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nado_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nado_user} -d ${POSTGRES_DB:-nado}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: nado-keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-nado}
+      KC_DB_USERNAME: ${POSTGRES_USER:-nado_user}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-nado_secret}
+      KC_DB_SCHEMA: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nado-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-nado}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-nado_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-nado_secret}
+      JWT_SECRET: ${JWT_SECRET:-NadoDevSecretKey2026OnlyForLocalDevelopment!!}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@nado.ru}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-N@d0_Adm!n_2026}
+      ADMIN_SEED_ENABLED: "true"
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/nado
+      KEYCLOAK_JWK: http://keycloak:8080/realms/nado/protocol/openid-connect/certs
+      KEYCLOAK_PUBLIC_URL: http://localhost:8180
+      AUTH_MODE: ${AUTH_MODE:-legacy}
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads-data:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nado-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:
+  uploads-data:

@@ -1,0 +1,53 @@
+# === Secrets ===
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# === Java / Maven ===
+backend/target/
+backend/*.log
+backend/logs/
+*.class
+*.jar
+*.war
+
+# === User uploads (runtime data) ===
+backend/uploads/
+
+# === Frontend / Node ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# === Docker ===
+postgres-data/
+keycloak-data/
+
+# === IDE ===
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.factorypath
+*.ipr
+*.iws
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Temp ===
+*.tmp
+*.bak
+*.orig
+.cleanup.sh
+
+# === Agent ===
+.agents/

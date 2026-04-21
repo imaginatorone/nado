@@ -1,0 +1,26 @@
+{
+  "name": "Nado",
+  "short_name": "Nado",
+  "description": "Только то, что надо — и ничего лишнего. Электронная доска объявлений.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B1622",
+  "theme_color": "#00B894",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "business"]
+}
