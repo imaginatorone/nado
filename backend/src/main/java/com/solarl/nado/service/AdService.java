@@ -163,14 +163,57 @@ public class AdService {
     public PageResponse<AdResponse> searchAds(AdSearchRequest request) {
         int page = request.getPage() != null ? request.getPage() : 0;
         int size = request.getSize() != null ? request.getSize() : 20;
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
+        String query = request.getQuery();
+        boolean hasQuery = query != null && !query.isBlank();
+        String sanitized = hasQuery ? sanitizeFtsQuery(query) : null;
+
+        // fts path: текстовый запрос достаточной длины и не titleOnly
+        // фильтры (category, price, region) применяются поверх FTS-результатов
+        boolean useFts = sanitized != null && sanitized.length() >= 2
+                && !Boolean.TRUE.equals(request.getTitleOnly());
+
+        if (useFts) {
+            // FTS ранжирование + фильтры через specification
+            boolean hasFilters = request.getCategoryId() != null
+                    || request.getRegion() != null
+                    || request.getUserId() != null
+                    || request.getPriceFrom() != null
+                    || request.getPriceTo() != null
+                    || Boolean.TRUE.equals(request.getWithPhoto());
+
+            if (!hasFilters) {
+                // чистый FTS без фильтров - нативный ranked query
+                Pageable pageable = PageRequest.of(page, size);
+                Page<Ad> adPage = adRepository.fullTextSearch(sanitized, pageable);
+                return toPageResponse(adPage);
+            }
+
+            // FTS + фильтры: сначала FTS отбор, потом specification фильтрация
+            // используем specification с FTS-based text matching
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Specification<Ad> spec = buildSearchSpec(request);
+            Page<Ad> adPage = adRepository.findAll(spec, pageable);
+            return toPageResponse(adPage);
+        }
+
+        // fallback: specification-based поиск с LIKE (пустой/короткий query, titleOnly)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Specification<Ad> spec = buildSearchSpec(request);
         Page<Ad> adPage = adRepository.findAll(spec, pageable);
         return toPageResponse(adPage);
     }
 
-    /** Все объявления (включая удалённые) — для админ-панели */
+    /**
+     * убираем спецсимволы tsquery, оставляем только слова и пробелы.
+     * предотвращает синтаксические ошибки PostgreSQL FTS.
+     */
+    private String sanitizeFtsQuery(String raw) {
+        // убираем всё кроме букв, цифр и пробелов
+        return raw.replaceAll("[^\\p{L}\\p{N}\\s]", "").trim();
+    }
+
+    /** Все объявления (включая удалённые) - для админ-панели */
     @Transactional(readOnly = true)
     public PageResponse<AdResponse> getAllAdsForAdmin(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -186,7 +229,7 @@ public class AdService {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // публичный поиск — только PUBLISHED
+            // публичный поиск - только PUBLISHED
             predicates.add(cb.equal(root.get("status"), Ad.Status.PUBLISHED));
 
             // текстовый поиск

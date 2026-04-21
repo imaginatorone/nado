@@ -74,6 +74,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/captcha").permitAll()
                 .antMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .antMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                // websocket handshake - auth на уровне STOMP CONNECT
+                .antMatchers("/ws/**").permitAll()
                 .antMatchers("/phone-verification/**").authenticated()
                 .antMatchers("/moderation/**").hasAnyRole("MODERATOR", "ADMIN")
                 .antMatchers("/admin/**").hasRole("ADMIN")

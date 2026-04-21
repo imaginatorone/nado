@@ -18,4 +18,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     @Query("SELECT a FROM Auction a JOIN FETCH a.ad WHERE a.status = 'ACTIVE' ORDER BY a.endsAt ASC")
     List<Auction> findActiveAuctions();
+
+    // dashboard analytics
+    long countByStatus(Auction.AuctionStatus status);
 }

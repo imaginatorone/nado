@@ -24,6 +24,7 @@ class NotificationServiceTest {
 
     @Mock private NotificationRepository repository;
     @Spy  private ObjectMapper objectMapper = new ObjectMapper();
+    @Mock private EmailNotificationService emailService;
 
     @InjectMocks private NotificationService service;
 

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { chatAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { IconChat, IconPackage } from '../components/Icons';
+import { useChatWebSocket } from '../hooks/useChatWebSocket';
 
 function formatTime(dateStr) {
   if (!dateStr) return '';
@@ -82,18 +83,33 @@ export default function ChatPage() {
     } catch {}
   }, []);
 
+  // websocket: realtime сообщения, polling как fallback
+  const handleWsMessage = useCallback((msg) => {
+    setMessages(prev => {
+      // дедуп по id
+      if (prev.some(m => m.id === msg.id)) return prev;
+      return [...prev, msg];
+    });
+    loadRooms();
+  }, [loadRooms]);
+
+  const { connected: wsConnected } = useChatWebSocket(activeRoomId, handleWsMessage);
+
   useEffect(() => {
     if (!activeRoomId) return;
     loadMessages(activeRoomId);
     chatAPI.markAsRead(activeRoomId).catch(() => {});
 
+    // ws connected: polling только для sidebar (раз в 15с)
+    // ws disconnected: полный polling раз в 4с
+    const interval = wsConnected ? 15000 : 4000;
     pollRef.current = setInterval(() => {
-      loadMessages(activeRoomId);
+      if (!wsConnected) loadMessages(activeRoomId);
       loadRooms();
-    }, 4000);
+    }, interval);
 
     return () => clearInterval(pollRef.current);
-  }, [activeRoomId, loadMessages, loadRooms]);
+  }, [activeRoomId, loadMessages, loadRooms, wsConnected]);
 
   // скролл только при новых сообщениях, чтобы не дёргать при polling
   useEffect(() => {

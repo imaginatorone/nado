@@ -16,6 +16,7 @@ import ChatPage from './pages/ChatPage';
 import FavoritesPage from './pages/FavoritesPage';
 import AdminPage from './pages/AdminPage';
 import AdminPanel from './pages/AdminPanel';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import ModerationPage from './pages/ModerationPage';
 import WantedPage from './pages/WantedPage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -65,6 +66,7 @@ function App() {
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/moderation" element={<ModeratorRoute><ModerationPage /></ModeratorRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+            <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
             <Route path="/nado-control" element={<AdminPanel />} />
           </Routes>
         </div>

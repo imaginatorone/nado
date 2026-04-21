@@ -33,11 +33,12 @@
 ┌──────────────┐     REST API      ┌──────────────────────────────────┐
 │   React SPA  │ ◄──────────────► │         Spring Boot              │
 │   (Vite)     │    JSON / JWT     │                                  │
-└──────────────┘                   │  Controller → Service → Repo     │
-                                   │                  ↓               │
-        ┌──────────────┐           │            PostgreSQL            │
-        │   Keycloak   │ ◄────────│       (OAuth2 Resource Server)   │
-        │   (опц.)     │           └──────────────────────────────────┘
+│              │ ◄── WebSocket ──► │  Controller → Service → Repo     │
+└──────────────┘   STOMP/SockJS    │                  ↓               │
+                                   │            PostgreSQL            │
+        ┌──────────────┐           │       (OAuth2 Resource Server)   │
+        │   Keycloak   │ ◄────────│       (+ Google IdP)             │
+        │              │           └──────────────────────────────────┘
         └──────────────┘
 ```
 
@@ -314,12 +315,17 @@ Keycloak - целевая архитектура для production (OAuth2, SSO,
 
 ## Планы развития
 
-- [ ] WebSocket для чата (замена polling)
-- [ ] Email-уведомления (Spring Mail + emailVerified gate)
-- [ ] Google IdP через Keycloak
-- [ ] Полнотекстовый поиск (PostgreSQL FTS)
-- [ ] Admin dashboard с аналитикой
+- [x] Полнотекстовый поиск (PostgreSQL FTS, tsvector + GIN, russian config, ranked results)
+- [x] Admin dashboard с аналитикой (users, ads, auctions, wanted, categories, 30-day chart)
+- [x] Email-уведомления (Spring Mail, emailVerified gate, SMTP через env, graceful fallback)
+- [x] Google IdP через Keycloak (realm config с placeholder, account linking, documented setup)
+- [x] WebSocket для чата (STOMP/SockJS, dual-mode auth interceptor, polling fallback)
 - [ ] Оплата через Stripe/ЮKassa для аукционов
+- [ ] Миграция на Java 17 / Spring Boot 3
+
+> **Google IdP:** требуется настройка в Google Cloud Console + Keycloak admin.
+> **Email:** SMTP credentials через `.env`, по умолчанию отключен (`MAIL_ENABLED=false`).
+> **WebSocket:** auth интегрирован с существующей security model (legacy JWT / Keycloak).
 
 ---
 

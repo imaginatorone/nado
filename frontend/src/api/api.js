@@ -140,6 +140,7 @@ export const auctionsAPI = {
 
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
+  getDashboard: () => api.get('/admin/dashboard'),
   getAllAds: (page = 0, size = 20) => api.get(`/admin/ads?page=${page}&size=${size}`),
   getAllUsers: () => api.get('/admin/users'),
   deleteAd: (id) => api.delete(`/admin/ads/${id}`),

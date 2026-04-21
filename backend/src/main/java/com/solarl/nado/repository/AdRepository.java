@@ -40,4 +40,23 @@ public interface AdRepository extends JpaRepository<Ad, Long>, JpaSpecificationE
     // для matching (wanted) — только PUBLISHED
     @Query("SELECT a FROM Ad a WHERE a.status = 'PUBLISHED' AND a.category.id = :categoryId")
     List<Ad> findPublishedByCategory(@Param("categoryId") Long categoryId);
+
+    // полнотекстовый поиск через PostgreSQL FTS
+    @Query(value = "SELECT * FROM ads WHERE status = 'PUBLISHED' " +
+            "AND search_vector @@ plainto_tsquery('russian', :query) " +
+            "ORDER BY ts_rank(search_vector, plainto_tsquery('russian', :query)) DESC",
+            countQuery = "SELECT count(*) FROM ads WHERE status = 'PUBLISHED' " +
+                    "AND search_vector @@ plainto_tsquery('russian', :query)",
+            nativeQuery = true)
+    Page<Ad> fullTextSearch(@Param("query") String query, Pageable pageable);
+
+    // аналитика для admin dashboard
+    @Query("SELECT a.status, COUNT(a) FROM Ad a GROUP BY a.status")
+    List<Object[]> countByStatusGrouped();
+
+    @Query("SELECT a.category.name, COUNT(a) FROM Ad a WHERE a.status = 'PUBLISHED' GROUP BY a.category.name ORDER BY COUNT(a) DESC")
+    List<Object[]> topCategories();
+
+    @Query("SELECT CAST(a.createdAt AS date), COUNT(a) FROM Ad a WHERE a.createdAt >= :since GROUP BY CAST(a.createdAt AS date) ORDER BY CAST(a.createdAt AS date)")
+    List<Object[]> dailyAdCounts(@Param("since") java.time.LocalDateTime since);
 }

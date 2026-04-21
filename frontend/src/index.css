@@ -4920,3 +4920,21 @@ html, body {
     font-size: 1.5rem;
   }
 }
+
+/* --- Admin Dashboard Grid --- */
+.dash-grid { display: grid; gap: 12px; }
+.dash-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.dash-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.dash-grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+@media (max-width: 768px) {
+  .dash-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid-5 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .dash-grid-3,
+  .dash-grid-4,
+  .dash-grid-5 { grid-template-columns: 1fr; }
+}

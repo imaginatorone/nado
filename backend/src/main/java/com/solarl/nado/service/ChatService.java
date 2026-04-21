@@ -187,7 +187,7 @@ public class ChatService {
 
     /**
      * Object-level authorization для доступа к вложению чата.
-     * Проверяет: сообщение существует, имеет вложение, пользователь — участник комнаты.
+     * Проверяет: сообщение существует, имеет вложение, пользователь - участник комнаты.
      */
     @Transactional(readOnly = true)
     public ChatMessage getAuthorizedAttachment(Long messageId, Long userId) {
@@ -204,5 +204,24 @@ public class ChatService {
         }
 
         return msg;
+    }
+
+    // проверка участия в комнате для websocket subscribe auth
+    @Transactional(readOnly = true)
+    public boolean isRoomMember(Long roomId, Long userId) {
+        return chatRoomRepository.findById(roomId)
+                .map(room -> room.getBuyer().getId().equals(userId)
+                        || room.getSeller().getId().equals(userId))
+                .orElse(false);
+    }
+
+    // получатель сообщения (не sender) для ws broadcast
+    @Transactional(readOnly = true)
+    public Long getRecipientId(Long roomId, Long senderId) {
+        ChatRoom room = chatRoomRepository.findById(roomId).orElse(null);
+        if (room == null) return null;
+        return room.getBuyer().getId().equals(senderId)
+                ? room.getSeller().getId()
+                : room.getBuyer().getId();
     }
 }

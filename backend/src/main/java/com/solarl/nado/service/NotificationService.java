@@ -33,6 +33,7 @@ public class NotificationService {
 
     private final NotificationRepository repository;
     private final ObjectMapper objectMapper;
+    private final EmailNotificationService emailService;
 
     /**
      * единственная точка входа для всех уведомлений.
@@ -152,11 +153,8 @@ public class NotificationService {
 
 
     private void routeToChannels(User recipient, NotificationType type, Map<String, Object> payload) {
-        // in-app уже персистирован; email — при наличии emailVerified
-
-        // EMAIL — extension point: только если emailVerified
-        // TODO: inject EmailService, check recipient.getEmailVerified()
-        // if (recipient.getEmailVerified()) { emailService.send(...); }
+        // in-app уже персистирован выше; дополнительные каналы ниже
+        emailService.trySend(recipient, type, payload);
     }
 
 
