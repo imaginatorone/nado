@@ -9,10 +9,12 @@ import java.util.List;
 
 @Entity
 @Table(name = "ads")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"category", "user", "images", "comments", "moderatedBy"})
 public class Ad {
 
     @Id
@@ -30,14 +32,10 @@ public class Ad {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(nullable = false, length = 30)
@@ -52,14 +50,10 @@ public class Ad {
 
     @OneToMany(mappedBy = "ad", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<Image> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "ad", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<Comment> comments = new ArrayList<>();
 
     @Column(length = 100)
@@ -75,8 +69,6 @@ public class Ad {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "moderated_by")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private User moderatedBy;
 
     @Column(name = "submitted_at")
@@ -103,6 +95,22 @@ public class Ad {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Equality by database identity (id), safe for JPA managed entities.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ad ad = (Ad) o;
+        return id != null && id.equals(ad.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
     /**

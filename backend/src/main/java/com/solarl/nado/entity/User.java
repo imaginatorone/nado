@@ -3,13 +3,16 @@ package com.solarl.nado.entity;
 import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {})
 public class User {
 
     @Id
@@ -100,6 +103,24 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Equality by database identity (id), safe for JPA managed entities.
+     * Two transient entities (id == null) are never equal unless same reference.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        // consistent hash for both transient and managed states
+        return getClass().hashCode();
     }
 
     public enum Role {
