@@ -10,22 +10,23 @@
 
 ## О проекте
 
-**Nado** - полноценная платформа электронных объявлений, разработанная в рамках курса SolarLab. Пользователи могут размещать, искать и покупать товары, участвовать в аукционах, создавать поисковые запросы «Хочу купить», общаться с продавцами в реальном времени и получать уведомления о всех важных событиях.
+**Nado** - полноценная платформа электронных объявлений, разработанная в рамках курса SolarLab. Пользователи могут размещать, искать и покупать товары, участвовать в аукционах, создавать поисковые запросы «Хочу купить», общаться с продавцами в реальном времени (WebSocket) и получать уведомления через in-app и email каналы.
 
 Проект реализован как production-ready SPA с акцентом на чистую архитектуру, безопасность, модульность и мобильную доступность (PWA).
 
 ## Ключевые возможности
 
-- **Объявления** - CRUD с фотографиями, категориями, поиском, фильтрацией по региону и цене
+- **Объявления** - CRUD с фотографиями, категориями, полнотекстовым поиском (FTS), фильтрацией по региону и цене
 - **Жизненный цикл** - черновик → модерация → публикация → продано / архив / блокировка
 - **Аукционы** - live-торги с обратным отсчётом, авто-продлением, снайпер-защитой
 - **«Хочу купить»** - rule-based matching engine: создаёшь запрос, получаешь совпадения при публикации новых объявлений
-- **Уведомления** - единая in-app платформа: модерация, аукционы, wanted, системные события
-- **Чат** - переписка продавец/покупатель с привязкой к объявлению, поддержка файлов
+- **Уведомления** - единая платформа (IN_APP + EMAIL): модерация, аукционы, wanted, системные события
+- **Чат** - realtime переписка через WebSocket (STOMP/SockJS) с polling fallback, поддержка файлов
+- **Admin Dashboard** - аналитика: пользователи, объявления, аукционы, категории, 30-дневный тренд
 - **Рейтинг доверия** - многофакторная оценка продавца (заполненность профиля, отзывы, верификация)
 - **Модерация** - панель для модераторов с одобрением/отклонением/блокировкой объявлений
 - **PWA** - установка на домашний экран, standalone mode, offline-shell
-- **Dual-mode Auth** - Keycloak OAuth2 (target) / self-issued JWT (legacy)
+- **Dual-mode Auth** - Keycloak OAuth2 + Google IdP (target) / self-issued JWT (legacy)
 
 ## Архитектура
 
@@ -50,11 +51,11 @@
 | ------------------ | ---------------------------------------------------------------------- |
 | **Backend**        | Java 11, Spring Boot 2.7, Spring MVC, Spring Security, Spring Data JPA |
 | **Auth**           | Keycloak OAuth2 / self-issued JWT (dual-mode), BCrypt                  |
-| **БД**             | PostgreSQL 15, Flyway (20 миграций)                                    |
+| **БД**             | PostgreSQL 15, Flyway (22 миграции)                                    |
 | **Frontend**       | React 18, Vite 5, Vanilla CSS (glassmorphism, dark theme)              |
 | **Инфраструктура** | Docker, Docker Compose, Nginx                                          |
 | **PWA**            | Service Worker, Web App Manifest, standalone mode                      |
-| **Тестирование**   | JUnit 5, Mockito, H2, ArchUnit (94 теста)                              |
+| **Тестирование**   | JUnit 5, Mockito, H2, ArchUnit (117 тестов)                            |
 | **API Docs**       | Swagger / SpringDoc OpenAPI                                            |
 
 ## Ролевая модель
@@ -76,7 +77,7 @@
 - Spring Security Resource Server валидирует JWT от Keycloak
 - Realm `nado` с клиентом `nado-frontend`
 - Поддержка silent SSO check
-- Готово к подключению Google/VK IdP
+- Google IdP настроен (realm config + account linking), VK - extension point
 
 ### Legacy JWT (transitional)
 
@@ -142,8 +143,8 @@ Rule-based matching engine:
 | `NEW_RATING`              | Новый отзыв                 | Extension point |
 | `SYSTEM`                  | Системное                   | Manual          |
 
-Каналы: **IN_APP** (работает), **EMAIL** (extension point, `emailVerified` gate).
-Дедупликация на уровне `existsByUserIdAndTypeAndPayload`.
+Каналы: **IN_APP** (обязательный), **EMAIL** (6 MVP-типов, `emailVerified` gate, Spring Mail).
+Дедупликация на уровне SHA-256 canonical payload hash.
 
 ## Безопасность и приватность
 
@@ -171,21 +172,21 @@ nado/
 ├── backend/
 │   ├── src/main/java/com/solarl/nado/
 │   │   ├── config/          # конфигурация (Security, CORS, Swagger, Keycloak, DataSeeder)
-│   │   ├── controller/      # REST-контроллеры (18 шт.)
+│   │   ├── controller/      # REST + WS контроллеры (20 шт.)
 │   │   ├── dto/             # request/response DTO
 │   │   ├── entity/          # JPA-сущности (16 шт.)
 │   │   ├── exception/       # глобальный обработчик ошибок
 │   │   ├── repository/      # Spring Data репозитории
 │   │   ├── security/        # JWT, AuthFacade, фильтры
-│   │   └── service/         # бизнес-логика (21 сервис)
+│   │   └── service/         # бизнес-логика (23 сервиса)
 │   └── src/main/resources/
-│       └── db/migration/    # Flyway (V1..V20)
+│       └── db/migration/    # Flyway (V1..V22)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/             # Axios API layer
 │   │   ├── components/      # переиспользуемые компоненты
 │   │   ├── context/         # AuthContext (dual-mode)
-│   │   └── pages/           # 17 страниц
+│   │   └── pages/           # 18 страниц
 │   └── public/              # PWA manifest, SW, иконки
 ├── keycloak/                # realm export для автоматического импорта
 ├── docker-compose.yml
@@ -243,9 +244,14 @@ npm run dev
 | `POSTGRES_PASSWORD`  | Пароль БД                  | —                                             |
 | `JWT_SECRET`         | Ключ для self-issued JWT   | —                                             |
 | `KEYCLOAK_ISSUER`    | URL Keycloak realm         | `http://localhost:8180/realms/nado`           |
+| `GOOGLE_CLIENT_ID`   | OAuth Client ID (Google)   | — (требует Google Console)                    |
+| `GOOGLE_CLIENT_SECRET`| OAuth Secret (Google)     | — (требует Google Console)                    |
 | `UPLOAD_DIR`         | Директория загрузки файлов | `./uploads`                                   |
 | `CORS_ORIGINS`       | Разрешённые origins        | `http://localhost:3000,http://localhost:5173` |
 | `ADMIN_SEED_ENABLED` | Создать admin при старте   | `false`                                       |
+| `MAIL_ENABLED`       | Включить email-канал       | `false`                                       |
+| `MAIL_FROM`          | Адрес отправителя email    | `noreply@nado.ru`                             |
+| `SMTP_HOST`          | SMTP-сервер                | `smtp.gmail.com`                              |
 
 Полный список - в `.env.example`.
 
@@ -256,7 +262,7 @@ cd backend
 mvn test
 ```
 
-**94 теста**, 18 тестовых классов:
+**117 тестов**, 20 тестовых классов:
 
 | Класс                           | Покрытие                                                           |
 | ------------------------------- | ------------------------------------------------------------------ |
@@ -269,7 +275,10 @@ mvn test
 | `SecurityContractTest`          | public/protected endpoints, DTO privacy                            |
 | `FileValidationServiceTest`     | MIME/extension whitelist                                           |
 | `ArchitectureTest`              | ArchUnit: слои, зависимости, именование                            |
-| + 9 других                      | users, categories, comments, ratings, favorites, trust, phone, JWT |
+| `EmailNotificationServiceTest`  | gates (verified/disabled/type), SMTP failure survival              |
+| `ChatServiceSecurityTest`       | room membership, outsider rejection, attachment auth               |
+| `FtsSanitizationTest`           | tsquery sanitization, SQL injection, cyrillic, special chars       |
+| + 8 других                      | users, categories, comments, ratings, favorites, trust, phone, JWT |
 
 ## Что реализовано / Extension points
 
@@ -279,21 +288,21 @@ mvn test
 - Ad lifecycle + модерация
 - Аукционы (live bidding, auto-extend, outcome tracking)
 - «Хочу купить» (rule-based matching)
-- In-App уведомления (единая платформа, 11 типов)
-- Чат продавец/покупатель
+- Уведомления (единая платформа, 11 типов, IN_APP + EMAIL каналы)
+- Чат продавец/покупатель (WebSocket STOMP + polling fallback)
+- Полнотекстовый поиск (PostgreSQL FTS, tsvector + GIN, russian config)
+- Admin dashboard с аналитикой (users, ads, auctions, categories, 30-day trend)
 - Рейтинг доверия (foundation)
 - Dual-mode auth (Keycloak / JWT)
+- Google IdP через Keycloak (realm config, account linking)
 - PWA (installable, offline shell, deep links)
 - Серверная капча
 - Phone verification flow
 
 ### Extension points (подготовлены, не реализованы в MVP)
 
-- Email-канал уведомлений (`emailVerified` gate готов)
 - SMS-канал уведомлений
-- Google/VK IdP через Keycloak
-- WebSocket для чата (polling → WS)
-- Полнотекстовый поиск (PostgreSQL FTS / Elasticsearch)
+- VK IdP через Keycloak
 - Payment integration для аукционов
 
 ## FAQ
