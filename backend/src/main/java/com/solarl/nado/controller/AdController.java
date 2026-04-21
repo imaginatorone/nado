@@ -8,6 +8,7 @@ import com.solarl.nado.dto.response.MyAdResponse;
 import com.solarl.nado.dto.response.PageResponse;
 import com.solarl.nado.dto.response.PhoneResponse;
 import com.solarl.nado.service.AdService;
+import com.solarl.nado.service.AdStatusTransitionService;
 import com.solarl.nado.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
 public class AdController {
 
     private final AdService adService;
+    private final AdStatusTransitionService transitionService;
     private final UserService userService;
 
     @Operation(summary = "Список активных объявлений")
@@ -96,5 +98,19 @@ public class AdController {
         String phone = adService.getSellerPhone(id);
         log.info("AUDIT: user id={} запросил телефон по объявлению id={}", userId, id);
         return ResponseEntity.ok(userService.revealPhone(phone));
+    }
+
+    @Operation(summary = "Пометить как продано")
+    @PatchMapping("/{id}/sold")
+    public ResponseEntity<Void> markSold(@PathVariable Long id) {
+        transitionService.markSold(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Снять с публикации / архивировать")
+    @PatchMapping("/{id}/archive")
+    public ResponseEntity<Void> archiveAd(@PathVariable Long id) {
+        transitionService.archiveAd(id);
+        return ResponseEntity.ok().build();
     }
 }

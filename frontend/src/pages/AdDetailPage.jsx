@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adsAPI, imagesAPI } from '../api/api';
@@ -17,14 +17,71 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+/* Lightbox: fullscreen photo viewer with arrows + swipe */
+function Lightbox({ images, startIndex, onClose }) {
+  const [idx, setIdx] = useState(startIndex);
+  const touchRef = useRef(null);
+
+  const prev = () => setIdx(i => (i > 0 ? i - 1 : images.length - 1));
+  const next = () => setIdx(i => (i < images.length - 1 ? i + 1 : 0));
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
+  const onTouchStart = (e) => { touchRef.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchRef.current === null) return;
+    const diff = touchRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
+    touchRef.current = null;
+  };
+
+  return (
+    <div className="lightbox-overlay" onClick={onClose}>
+      <button className="lightbox-close" onClick={onClose}>×</button>
+      {images.length > 1 && (
+        <>
+          <button className="lightbox-arrow lightbox-arrow-left" onClick={(e) => { e.stopPropagation(); prev(); }}>‹</button>
+          <button className="lightbox-arrow lightbox-arrow-right" onClick={(e) => { e.stopPropagation(); next(); }}>›</button>
+        </>
+      )}
+      <img
+        className="lightbox-image"
+        src={imagesAPI.getUrl(images[idx].id)}
+        alt=""
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        draggable={false}
+      />
+      {images.length > 1 && (
+        <div className="lightbox-counter">{idx + 1} / {images.length}</div>
+      )}
+    </div>
+  );
+}
+
 export default function AdDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [ad, setAd] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const touchRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
@@ -44,6 +101,26 @@ export default function AdDetailPage() {
     }
   };
 
+  const prevImage = useCallback(() => {
+    if (!ad?.images?.length) return;
+    setSelectedImage(i => (i > 0 ? i - 1 : ad.images.length - 1));
+  }, [ad]);
+
+  const nextImage = useCallback(() => {
+    if (!ad?.images?.length) return;
+    setSelectedImage(i => (i < ad.images.length - 1 ? i + 1 : 0));
+  }, [ad]);
+
+  // swipe on gallery
+  const onGalleryTouchStart = (e) => { touchRef.current = e.touches[0].clientX; };
+  const onGalleryTouchEnd = (e) => {
+    if (touchRef.current === null) return;
+    const diff = touchRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? nextImage() : prevImage(); }
+    else { setLightboxOpen(true); } // tap = open fullscreen
+    touchRef.current = null;
+  };
+
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
   if (error) return <div className="empty-state"><h3>{error}</h3></div>;
   if (!ad) return null;
@@ -51,6 +128,21 @@ export default function AdDetailPage() {
   const isOwner = user && user.id === ad.userId;
   const isAdmin = user && user.role === 'ADMIN';
   const hasImages = ad.images && ad.images.length > 0;
+  const multipleImages = hasImages && ad.images.length > 1;
+  const isClosed = ad.status === 'SOLD' || ad.status === 'ARCHIVED';
+  const isPublished = ad.status === 'PUBLISHED';
+
+  const handleClose = async (type) => {
+    const labels = { sold: 'Пометить как продано?', archive: 'Снять с публикации?' };
+    if (!window.confirm(labels[type])) return;
+    try {
+      if (type === 'sold') await adsAPI.markSold(ad.id);
+      else await adsAPI.archive(ad.id);
+      setAd(prev => ({ ...prev, status: type === 'sold' ? 'SOLD' : 'ARCHIVED' }));
+    } catch {
+      alert('Ошибка');
+    }
+  };
 
   return (
     <motion.div
@@ -58,21 +150,44 @@ export default function AdDetailPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
+      {lightboxOpen && hasImages && (
+        <Lightbox
+          images={ad.images}
+          startIndex={selectedImage}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
       <div className="ad-detail">
         <div className="ad-detail-main">
-          <div className="ad-detail-gallery">
+          <div
+            className="ad-detail-gallery"
+            onTouchStart={onGalleryTouchStart}
+            onTouchEnd={onGalleryTouchEnd}
+          >
             {hasImages ? (
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={selectedImage}
-                  src={imagesAPI.getUrl(ad.images[selectedImage].id)}
-                  alt={ad.title}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                />
-              </AnimatePresence>
+              <>
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={selectedImage}
+                    src={imagesAPI.getUrl(ad.images[selectedImage].id)}
+                    alt={ad.title}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setLightboxOpen(true)}
+                    style={{ cursor: 'zoom-in' }}
+                  />
+                </AnimatePresence>
+                {multipleImages && (
+                  <>
+                    <button className="gallery-arrow gallery-arrow-left" onClick={(e) => { e.stopPropagation(); prevImage(); }}>‹</button>
+                    <button className="gallery-arrow gallery-arrow-right" onClick={(e) => { e.stopPropagation(); nextImage(); }}>›</button>
+                    <div className="gallery-counter">{selectedImage + 1} / {ad.images.length}</div>
+                  </>
+                )}
+              </>
             ) : (
               <IconCamera size={48} style={{color: 'var(--text-muted)'}} />
             )}
@@ -104,8 +219,16 @@ export default function AdDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <div className="ad-detail-price">{formatPrice(ad.price)}</div>
-            {ad.saleType === 'AUCTION' && (
+            {isClosed ? (
+              <div className="ad-closed-badge">
+                <span className={`badge ${ad.status === 'SOLD' ? 'badge-success' : 'badge-ghost'}`} style={{ fontSize: '1rem', padding: '8px 18px' }}>
+                  {ad.status === 'SOLD' ? '✓ Продано' : 'Снято с публикации'}
+                </span>
+              </div>
+            ) : (
+              <div className="ad-detail-price">{formatPrice(ad.price)}</div>
+            )}
+            {ad.saleType === 'AUCTION' && !isClosed && (
               <div style={{ marginBottom: '12px' }}>
                 <span className="badge badge-warning" style={{ fontSize: '0.78rem' }}>🔨 Аукцион</span>
               </div>
@@ -114,12 +237,11 @@ export default function AdDetailPage() {
               Опубликовано {formatDate(ad.createdAt)}
             </div>
 
-            {ad.saleType === 'AUCTION' && (
+            {ad.saleType === 'AUCTION' && isPublished && (
               <AuctionSection adId={ad.id} adOwnerId={ad.userId} />
             )}
 
-            {/* Chat button for non-owners */}
-            {isAuthenticated && !isOwner && (
+            {isAuthenticated && !isOwner && isPublished && (
               <Link
                 to={`/chats?adId=${ad.id}`}
                 className="btn btn-primary btn-lg"
@@ -129,7 +251,7 @@ export default function AdDetailPage() {
               </Link>
             )}
 
-            {!isAuthenticated && (
+            {!isAuthenticated && isPublished && (
               <Link
                 to="/login"
                 className="btn btn-primary btn-lg"
@@ -139,9 +261,21 @@ export default function AdDetailPage() {
               </Link>
             )}
 
-            {(isOwner || isAdmin) && (
+            {/* Закрыть объявление */}
+            {isOwner && isPublished && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <button onClick={() => handleClose('sold')} className="btn btn-success btn-sm" style={{ flex: 1 }}>
+                  ✓ Продано
+                </button>
+                <button onClick={() => handleClose('archive')} className="btn btn-ghost btn-sm" style={{ flex: 1 }}>
+                  Снять с публикации
+                </button>
+              </div>
+            )}
+
+            {(isOwner || isAdmin) && !isClosed && (
               <div style={{ display: 'flex', gap: '8px' }}>
-                {isOwner && (
+                {isOwner && isPublished && (
                   <Link to={`/ads/${ad.id}/edit`} className="btn btn-outline btn-sm" style={{ flex: 1 }}>
                     Редактировать
                   </Link>

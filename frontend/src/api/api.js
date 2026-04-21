@@ -57,6 +57,8 @@ export const adsAPI = {
   create: (data) => api.post('/ads', data),
   update: (id, data) => api.put(`/ads/${id}`, data),
   delete: (id) => api.delete(`/ads/${id}`),
+  markSold: (id) => api.patch(`/ads/${id}/sold`),
+  archive: (id) => api.patch(`/ads/${id}/archive`),
   getMy: (page = 0, size = 20) => api.get(`/ads/my?page=${page}&size=${size}`),
   getMyCabinet: (page = 0, size = 20, status) => {
     const params = new URLSearchParams({ page, size });

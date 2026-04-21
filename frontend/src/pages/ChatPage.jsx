@@ -236,9 +236,14 @@ export default function ChatPage() {
                     {activeRoom.otherUserName}
                     {isOtherAdmin && <span className="nado-team-badge">Команда Nado</span>}
                   </strong>
-                  <Link to={`/ads/${activeRoom.adId}`} className="chat-window-ad-link">
-                    {activeRoom.adTitle}
-                  </Link>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <Link to={`/profile/${activeRoom.otherUserId}`} className="chat-room-profile-link">
+                      Профиль
+                    </Link>
+                    <Link to={`/ads/${activeRoom.adId}`} className="chat-window-ad-link">
+                      {activeRoom.adTitle}
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

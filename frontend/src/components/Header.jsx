@@ -5,7 +5,7 @@ import { categoriesAPI, chatAPI, adsAPI, notificationsAPI } from '../api/api';
 import { IconChat, IconHeart, IconPackage, IconShield, IconSearch, IconPlus, IconUser } from './Icons';
 
 const REGIONS = [
-  'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+  'Москва', 'Санкт-Петербург', 'Севастополь', 'Новосибирск', 'Екатеринбург', 'Казань',
   'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
   'Уфа', 'Красноярск', 'Воронеж', 'Пермь', 'Волгоград',
 ];

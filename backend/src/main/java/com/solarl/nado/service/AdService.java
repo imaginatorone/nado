@@ -202,9 +202,13 @@ public class AdService {
                 }
             }
 
-            // фильтр по категории
+            // фильтр по категории (включая дочерние)
             if (request.getCategoryId() != null) {
-                predicates.add(cb.equal(root.get("category").get("id"), request.getCategoryId()));
+                List<Long> categoryIds = new ArrayList<>();
+                categoryIds.add(request.getCategoryId());
+                List<Category> children = categoryRepository.findByParentId(request.getCategoryId());
+                children.forEach(c -> categoryIds.add(c.getId()));
+                predicates.add(root.get("category").get("id").in(categoryIds));
             }
 
             // фильтр по цене

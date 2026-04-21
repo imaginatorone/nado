@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { moderationAPI } from '../api/api';
 
@@ -113,6 +114,13 @@ export default function ModerationPage() {
               )}
 
               <div className="moderation-card-actions">
+                <Link
+                  to={`/ads/${ad.id}`}
+                  className="btn btn-sm btn-outline"
+                  target="_blank"
+                >
+                  👁 Осмотреть
+                </Link>
                 <button
                   className="btn btn-sm btn-success"
                   disabled={actionLoading === ad.id}
