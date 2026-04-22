@@ -30,8 +30,8 @@ public class ImageService {
     private final FileValidationService fileValidationService;
 
     /**
-     * Загрузка изображения с проверкой владельца — вызывается из контроллера.
-     * Контроллер НЕ обращается к AdRepository напрямую.
+     * загрузка изображения к объявлению
+     * проверяет владельца, валидирует файл + сохраняет на диск
      */
     @Transactional
     public Image uploadImageForAd(Long adId, Long userId, MultipartFile file) throws IOException {
@@ -40,11 +40,7 @@ public class ImageService {
         if (!ad.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Нет прав на загрузку фото к этому объявлению");
         }
-        return uploadImage(ad, file);
-    }
 
-    @Transactional
-    public Image uploadImage(Ad ad, MultipartFile file) throws IOException {
         fileValidationService.validateImageFile(file);
 
         int currentCount = imageRepository.countByAdId(ad.getId());
